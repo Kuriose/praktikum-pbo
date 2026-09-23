@@ -24,8 +24,6 @@ Program ini memodelkan mekanisme dasar card game:
 - **Deck (`Deck`)** mengelola kartu di tangan pemain: menarik kartu acak, memakai kartu, dan membatasi jumlah kartu (max hand).
 - **Pemain (`Player`)** memiliki health, mana, level, serta sebuah `Deck`. Pemain dapat memakai kartu untuk menyerang pemain lain, menarik kartu, dan menerima damage.
 
-Tujuan utama versi ini adalah memisahkan tanggung jawab: urusan kartu dipegang `Deck`, sedangkan `Player` fokus pada status pemain (health, mana, hidup/mati).
-
 ### Data awal (contoh di `main.py`)
 
 | Kartu | Efek | Damage | SP Cost | Tipe |
@@ -123,49 +121,9 @@ Merepresentasikan pemain.
 | `checkMaximumHand()` | method | Mengembalikan kapasitas maksimal hand |
 | `calculateExpGain(value)` | staticmethod | Menghitung EXP: `1 + (value * 0.1)` |
 
-> **Catatan:** parameter `gold` diterima oleh `Player.__init__` tetapi belum disimpan sebagai atribut.
-
 ---
 
-## 5. Alur Kerja Program
-
-### 5.1 Membuat pemain
-
-```
-Player(name, health, mana, level, gold, list_card)
-   ├─ simpan name, level, __health, __mana, __isAlive = True
-   ├─ hand_multiplier = 1 jika level >= 5, selain itu 0
-   └─ __deck = Deck(list_card, hand_multiplier)
-          └─ tiap kartu awal dicatat ke __discovered_card
-```
-
-### 5.2 Menarik kartu (`draw_card`)
-
-```
-Player.draw_card()
-   ├─ Deck.is_full ?  ── ya ──> cetak "Hand ... Penuh!" lalu selesai
-   └─ tidak
-        └─ Deck.draw_card()
-             ├─ pilih kartu acak dari __discovered_card
-             ├─ tambahkan ke __list_card
-             └─ kembalikan kartu ──> Player mencetak "... Mengambil Kartu ..."
-```
-
-### 5.3 Memakai kartu (`use_card`)
-
-```
-Player.use_card(nomor, target)
-   ├─ nomor bukan int ? ──> ValueError
-   ├─ Deck.use_card(nomor)   (nomor di luar 1..jumlah kartu ──> ValueError)
-   │     └─ kartu dihapus dari hand dan dikembalikan
-   ├─ cetak "... menggunakan <kartu> untuk memberikan <damage> damage!"
-   └─ target.take_damage = damage
-         └─ health target berkurang; jika <= 0 maka health = 0 dan is_alive = False
-```
-
----
-
-## 8. Game Loop (`game.py`)
+## 6. Game Loop (`game.py`)
 
 `game.py` adalah game loop sederhana berbasis giliran (*hot-seat*: dua pemain bergantian di terminal yang sama) untuk memperlihatkan method-method yang ada. Jalankan dengan:
 
@@ -173,14 +131,14 @@ Player.use_card(nomor, target)
 python game.py
 ```
 
-### 8.1 Aturan main
+### 6.1 Aturan main
 
 - Warrior dan Novice bergantian, dimulai dari Warrior.
 - Pada setiap giliran, pemain memilih **satu aksi yang memakai giliran** (pakai kartu, tarik kartu, atau lewati). Melihat status tidak memakai giliran.
 - Kartu hanya bisa dipakai jika mana cukup untuk membayar `sp_cost` kartu tersebut.
 - Permainan berakhir saat health salah satu pemain mencapai 0. Pemenang mendapat EXP.
 
-### 8.2 Menu aksi
+### 6.2 Menu aksi
 
 | Pilihan | Aksi | Memakai giliran? |
 |---|---|---|
@@ -190,7 +148,7 @@ python game.py
 | `4` | Lewati giliran | Ya |
 | `0` | Keluar dari game | - |
 
-### 8.3 Method yang ditampilkan
+### 6.3 Method yang ditampilkan
 
 | Bagian di game | Member yang dipakai |
 |---|---|
@@ -203,12 +161,7 @@ python game.py
 | Menentukan kapan game berakhir | `Player.is_alive` (property) |
 | Memberi EXP kepada pemenang | `Player.calculateExpGain()` (staticmethod) |
 
-Dua hal yang dijaga di level game loop, bukan di class:
-
-- **Validasi input**: input non-angka dan nomor kartu di luar jangkauan ditolak dengan pesan, tanpa memakai giliran.
-- **Pemotongan mana**: `Player.use_card()` belum mengurangi mana, jadi `game.py` yang memeriksa mana sebelum memakai kartu dan memanggil `reduce_mana` sesudahnya.
-
-### 8.4 Contoh alur (dipersingkat)
+### 6.4 Contoh alur (dipersingkat)
 
 ```
 Ronde 1 - Giliran Warrior
