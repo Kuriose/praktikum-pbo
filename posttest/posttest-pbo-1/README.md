@@ -8,11 +8,7 @@
 2. [Cara Menjalankan](#2-cara-menjalankan)
 3. [Struktur File](#3-struktur-file)
 4. [Struktur Class](#4-struktur-class)
-5. [Alur Kerja Program](#5-alur-kerja-program)
-6. [Penerapan Enkapsulasi](#6-penerapan-enkapsulasi)
-7. [Panduan Pengujian](#7-panduan-pengujian)
-8. [Game Loop (`game.py`)](#8-game-loop-gamepy)
-9. [Batasan dan Catatan](#9-batasan-dan-catatan)
+5. [Game Loop (`game.py`)](#6-game-loop-gamepy)
 
 ---
 
@@ -123,7 +119,7 @@ Merepresentasikan pemain.
 
 ---
 
-## 6. Game Loop (`game.py`)
+## 5. Game Loop (`game.py`)
 
 `game.py` adalah game loop sederhana berbasis giliran (*hot-seat*: dua pemain bergantian di terminal yang sama) untuk memperlihatkan method-method yang ada. Jalankan dengan:
 
@@ -131,7 +127,7 @@ Merepresentasikan pemain.
 python game.py
 ```
 
-### 6.1 Aturan main
+### 5.1 Aturan main
 
 - Warrior dan Novice bergantian, dimulai dari Warrior.
 - Pada setiap giliran, pemain memilih **satu aksi yang memakai giliran** (pakai kartu, tarik kartu, atau lewati). Melihat status tidak memakai giliran.
@@ -148,7 +144,7 @@ python game.py
 | `4` | Lewati giliran | Ya |
 | `0` | Keluar dari game | - |
 
-### 6.3 Method yang ditampilkan
+### 5.3 Method yang ditampilkan
 
 | Bagian di game | Member yang dipakai |
 |---|---|
@@ -161,7 +157,7 @@ python game.py
 | Menentukan kapan game berakhir | `Player.is_alive` (property) |
 | Memberi EXP kepada pemenang | `Player.calculateExpGain()` (staticmethod) |
 
-### 6.4 Contoh alur (dipersingkat)
+### 5.4 Contoh alur (dipersingkat)
 
 ```
 Ronde 1 - Giliran Warrior
