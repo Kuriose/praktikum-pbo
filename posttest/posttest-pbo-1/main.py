@@ -13,7 +13,6 @@ class Card:
         if isinstance(card_type, int):
             self.card_type = Card.TIPE_KARTU[card_type - 1]    
 
-
 class Deck: 
     __discovered_card = []
 
