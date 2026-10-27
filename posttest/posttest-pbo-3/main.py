@@ -26,11 +26,11 @@ class Card(ABC):
 
     @abstractmethod
     def play(self, user: "Combatant", target: "Combatant") -> bool:
-        """Jalankan efek kartu; True jika kartu berhasil digunakan."""
+        pass
 
     @abstractmethod
     def resource_name(self) -> str:
-        """Nama sumber daya yang dipakai kartu."""
+        pass
 
     def describe(self) -> str:
         return f"{self.name} [{self.card_type}] | Skor {self.card_score} | Cost {self.cost} {self.resource_name()} — {self.description}"
@@ -173,8 +173,6 @@ class ScanCard(Card):
 
 
 class Deck:
-    """Deck milik karakter: komposisi, dengan batas total card-score."""
-
     DEFAULT_MAX_CARD_SCORE = 10
     DEFAULT_MAX_HAND = 3
 
@@ -285,8 +283,6 @@ class Deck:
 
 
 class Combatant(ABC):
-    """Abstract Base Class bagi semua entitas pertarungan."""
-
     def __init__(self, name, hp, mp, strength, intelligence, speed):
         self.name = name
         self.max_hp = hp
@@ -373,16 +369,21 @@ class Combatant(ABC):
         return actual
 
     def show_status(self):
-        print(f"{self.name}: HP {self.hp}/{self.max_hp} | MP {self.mp}/{self.max_mp} | STR {self.strength} | INT {self.intelligence} | SPD {self.speed}")
+        print(f"\n{self.name}: HP {self.hp}/{self.max_hp} | MP {self.mp}/{self.max_mp} | STR {self.strength} | INT {self.intelligence} | SPD {self.speed}")
+        print("-" * 90)
+
+    def show_weakness(self): 
+        combatant_weakness = next((k for k, v in self.affinities.items() if v == "WEAKNESS"), None)
+        print(f"{self.name} Lemah terhadap {combatant_weakness}")
         print("-" * 90)
 
     @abstractmethod
     def choose_action(self, battle: "Battle"):
-        """Entitas memilih dan menjalankan aksi."""
+        pass
 
     @abstractmethod
     def basic_attack_power(self):
-        """Menghasilkan nilai serangan dasar."""
+        pass
 
     def perform_basic_attack(self, target):
         damage = target.receive_attack(self.basic_attack_power(), "STRIKE")
@@ -410,8 +411,6 @@ class Player(Combatant):
 
 
 class Enemy(Combatant):
-    """Musuh AI dengan statistik dan affinity yang dapat bervariasi."""
-
     def __init__(self, name, hp, mp, strength, intelligence, speed, gold_reward, affinities=None):
         super().__init__(name, hp, mp, strength, intelligence, speed)
         self.gold_reward = gold_reward
@@ -438,8 +437,6 @@ class Enemy(Combatant):
 
 
 class Battle:
-    """Battle mengasosiasikan pemain dengan musuh yang dibuat untuk satu encounter."""
-
     def __init__(self, player, enemies, round_number=1):
         self.player = player
         self.enemies = list(enemies)
@@ -456,20 +453,27 @@ class Battle:
         return self.player.is_alive and not any(enemy.is_alive for enemy in self.enemies) and not self.escaped
 
     def player_turn(self, player):
+        player_menu = ["Basic Attack", "Play Card", "Draw Card", "Discard Card", "Block", "Scan Enemy", "Run"]
+        
         while player.is_alive:
-            print(f"\n{player.name} | HP {player.hp}/{player.max_hp} | MP {player.mp}/{player.max_mp} | Gold {player.gold}")
-            print("[1] Basic Attack  [2] Play Card  [3] Draw Card  [4] Discard Card")
-            print("[5] Block  [6] Scan Enemy  [7] Run")
+            # clear()
+            for enemy in self.enemies:
+                enemy.show_status()
             
+            print(f"{player.name} | HP {player.hp}/{player.max_hp} | MP {player.mp}/{player.max_mp} | Gold {player.gold}")
+            print("-" * 90)
+            for index, menu in enumerate(player_menu): 
+                print(f"[{index + 1}] {menu}")
+
+            print("-" * 90)
             choice = input("Aksi: ").strip()
             target = next((enemy for enemy in self.enemies if enemy.is_alive), None)
+            print("-" * 90)
             
             if choice == "1":
-                if target:
-                    player.perform_basic_attack(target)
-                    if target.affinities.get("STRIKE", "NEUTRAL") == "WEAKNESS":
-                        self.extra_turn = True
+                player.perform_basic_attack(target)
                 return
+            
             if choice == "2":
                 if not player.deck.hand:
                     print("Hand kosong. Draw kartu terlebih dahulu.")
@@ -493,13 +497,16 @@ class Battle:
                     player.deck.remove_from_hand(index - 1)
                     return
                 continue
+            
             if choice == "3":
                 card = player.deck.draw()
                 if card:
                     print(f"Kartu ditarik: {card.name}")
                     preview = player.deck.preview_next()
-                    print(f"Next Card Preview: {preview.name if preview else '(Deck kosong)'}")
+                    print(f"Next Preview Kartu Selanjutnya: {preview.name if preview else '(Deck kosong)'}")
+                    print("-" * 90)
                 return
+            
             if choice == "4":
                 if not player.deck.hand:
                     print("Hand kosong.")
@@ -512,22 +519,28 @@ class Battle:
                     print("Masukkan angka.")
                     continue
                 card = player.deck.discard(index - 1)
+                
                 if card:
                     refund = int(card.cost * 0.15) if card.resource_name() == "MP" else 0
                     player.restore_mp(refund)
                     print(f"{card.name} dibuang. MP dipulihkan: {refund}.")
                     return
+                
                 print("Nomor kartu tidak valid.")
                 continue
+            
             if choice == "5":
                 player.block(15)
                 return
+            
             if choice == "6":
                 if target:
                     target.show_status()
+                    target.show_weakness()
                 return
+            
             if choice == "7":
-                if random.random() < 0.5:
+                if random.random() < 0.9:
                     print("Berhasil melarikan diri.")
                     self.escaped = True
                 else:
@@ -537,11 +550,9 @@ class Battle:
 
     def run(self):
         clear()
-        print(f"=== COMBAT ROUND {self.round_number} ===")
-        for enemy in self.enemies:
-            enemy.show_status()
+        print(f"===> COMBAT ROUND {self.round_number}")
         
-        # Speed menentukan urutan; saat seri, pemain mendapat prioritas.
+        # Speed menentukan urutan. saat seri, pemain mendapat prioritas.
         turn_order = sorted([self.player] + self.enemies, key=lambda entity: (entity.speed, entity is self.player), reverse=True)
         while not self.is_over:
             for entity in turn_order:
@@ -552,7 +563,6 @@ class Battle:
                 entity.choose_action(self)
                 if not self.is_over and entity is self.player:
                     # Kelemahan target memberi satu aksi ekstra.
-                    # Ditandai oleh flag yang disetel saat receive_attack.
                     if getattr(self, "extra_turn", False):
                         self.extra_turn = False
                         print("Weakness! Pemain memperoleh Extra Turn.")
@@ -561,16 +571,17 @@ class Battle:
         
         if self.escaped:
             print("Pertarungan diakhiri dengan kabur.")
+            print("-" * 90)
         elif self.victory:
             print("Semua musuh dikalahkan!")
+            print("-" * 90)
         else:
             print("Pemain kalah.")
+            print("-" * 90)
         return self.victory
 
 
 class Shop:
-    """Shop berinteraksi dengan Player; kartu yang dibeli ditambahkan ke deck."""
-
     def __init__(self, player, round_number):
         self.player = player
         self.round_number = round_number
@@ -585,36 +596,57 @@ class Shop:
         return f"Shop ronde {self.round_number}: {len(self.stock)} item tersedia"
 
     def visit(self):
+        shop_menu = [
+            "Beli Kartu", 
+            "Upgrade Kartu (+5 Power, 12 Gold)", 
+            "Upgrade Strength (+2, 20 Gold)", 
+            "Upgrade Max HP (+15, 20 Gold)", 
+            "Pulihkan HP/MP (10 Gold)", 
+            "Keluar Shop (Lanjut ke Ronde Selanjutnya)"
+        ]
+        
         while True:
-            print(f"\\n=== SHOP | Gold: {self.player.gold} | Card-score: {self.player.deck.total_score}/{self.player.deck.max_card_score} ===")
-            print("[1] Beli kartu  [2] Upgrade kartu (+5 power, 12 gold)")
-            print("[3] Upgrade Strength (+2, 20 gold)  [4] Upgrade Max HP (+15, 20 gold)")
-            print("[5] Pulihkan HP/MP (10 gold)  [0] Keluar shop")
+            print(f"===> SHOP | Gold: {self.player.gold} | Card-score: {self.player.deck.total_score}/{self.player.deck.max_card_score}")
+
+            for index, menu in enumerate(shop_menu): 
+                print(f"[{index + 1}] {menu}")
+
+            print("-" * 90)
             choice = input("Pilihan: ").strip()
-            if choice == "0":
+            print("-" * 90)
+            
+            if choice == "6":
                 return
             if choice == "1":
                 for i, (card, price) in enumerate(self.stock, 1):
                     print(f"[{i}] {card.describe()} | Harga {price} gold")
                 try:
+                    print("-" * 90)
                     index = int(input("Pilih kartu (0 batal): "))
                 except ValueError:
+                    print("-" * 90)
                     print("Masukkan angka.")
+                    print("-" * 90)
                     continue
                 if index == 0:
                     continue
                 if not 1 <= index <= len(self.stock):
+                    print("-" * 90)
                     print("Pilihan tidak valid.")
+                    print("-" * 90)
                     continue
                 card, price = self.stock[index - 1]
                 if self.player.gold < price:
+                    print("-" * 90)
                     print("Gold tidak cukup.")
+                    print("-" * 90)
                 elif not self.player.deck.add_card(card):
                     print("Card-score deck akan melewati batas 10.")
                 else:
                     self.player.gold -= price
                     self.stock.pop(index - 1)
                     print(f"{card.name} ditambahkan ke deck.")
+            
             elif choice == "2":
                 owned_cards = self.player.deck.all_cards()
                 upgradeable = [
@@ -628,9 +660,12 @@ class Shop:
                     power = card.damage if hasattr(card, "damage") else card.healing
                     print(f"[{i}] {card.name} | Power saat ini: {power}")
                 try:
+                    print("-" * 90)
                     index = int(input("Pilih kartu (0 batal): "))
+                    print("-" * 90)
                 except ValueError:
                     print("Masukkan angka.")
+                    print("-" * 90)
                     continue
                 if index == 0:
                     continue
@@ -639,8 +674,10 @@ class Shop:
                     continue
                 if self.player.gold < 12:
                     print("Gold tidak cukup (butuh 12 gold).")
+                    print("-" * 90)
                     continue
                 card = upgradeable[index - 1]
+                
                 if hasattr(card, "damage"):
                     card.damage += 5
                     new_power = card.damage
@@ -649,31 +686,42 @@ class Shop:
                     new_power = card.healing
                 self.player.gold -= 12
                 print(f"{card.name} berhasil di-upgrade. Power sekarang: {new_power}.")
+                print("-" * 90)
+            
             elif choice == "3":
                 if self.player.gold >= 20:
                     self.player.gold -= 20
                     self.player.strength += 2
                     print("Strength meningkat.")
+                    print("-" * 90)
                 else:
                     print("Gold tidak cukup.")
+                    print("-" * 90)
+            
             elif choice == "4":
                 if self.player.gold >= 20:
                     self.player.gold -= 20
                     self.player.max_hp += 15
                     self.player.hp = self.player.hp + 15
                     print("Max HP meningkat.")
+                    print("-" * 90)
                 else:
                     print("Gold tidak cukup.")
+                    print("-" * 90)
+            
             elif choice == "5":
                 if self.player.gold >= 10:
                     self.player.gold -= 10
                     self.player.restore_hp(30)
                     self.player.restore_mp(20)
                     print("HP dan MP dipulihkan.")
+                    print("-" * 90)
                 else:
                     print("Gold tidak cukup.")
+                    print("-" * 90)
             else:
                 print("Pilihan tidak valid.")
+                print("-" * 90)
 
 
 def create_enemy(round_number, index):
@@ -689,12 +737,11 @@ def create_enemy(round_number, index):
 
 
 def print_summary(item):
-    """Duck typing: menerima objek apa pun yang menyediakan summary()."""
+    # Duck typing: menerima objek apa pun yang menyediakan summary().
     print(item.summary())
 
 
 def demonstrate_oop():
-    """Demonstrasi singkat abstraksi, class/static method, dan validasi setter."""
     print("=== DEMONSTRASI OOP ===")
     try:
         Combatant("Abstrak", 10, 10, 1, 1, 1)

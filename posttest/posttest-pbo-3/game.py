@@ -1,4 +1,3 @@
-"""Entry point dan alur utama game roguelike berbasis CLI."""
 import random
 
 from main import Player, Battle, Shop, create_enemy, demonstrate_oop, clear
@@ -37,13 +36,17 @@ def run_game():
         enemy_count = random.randint(1, min(3, 1 + round_number // 2))
         enemies = [create_enemy(round_number, i + 1) for i in range(enemy_count)]
         battle = Battle(player, enemies, round_number)
+        
         won = battle.run()
         if not won:
             break
 
         player.gold += sum(enemy.gold_reward for enemy in enemies)
         highscore = round_number
-        print(f"\nRonde {round_number} selesai! Gold sekarang: {player.gold}.")
+        
+        print(f"Ronde {round_number} selesai! Gold sekarang: {player.gold}.")
+        print("-" * 90)
+        
         Shop(player, round_number).visit()
         player.restore_hp(10)
         player.restore_mp(8)
