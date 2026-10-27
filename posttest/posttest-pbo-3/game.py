@@ -1,136 +1,82 @@
-from main import FireCard, WaterCard, PlantCard, Player
+"""Entry point dan alur utama game roguelike berbasis CLI."""
+import random
 
-def buat_pemain():
-    card1 = FireCard(name="Fire Breath", effect="Membakar Musuh", damage=100, sp_cost=10, burn_damage=20)
-    card2 = WaterCard(name="Water's Delight", effect="Memulihkan Mana", damage=0, sp_cost=0, mana_restore=10, hp_restore=0)
-    card3 = PlantCard(name="Plant Sprout", effect="Mengikat Musuh", damage=50, sp_cost=15, bind_turns=1)
-    card4 = WaterCard(name="Holy Water", effect="Memulihkan HP", damage=0, sp_cost=0, mana_restore=0, hp_restore=50)
+from main import Player, Battle, Shop, create_enemy, demonstrate_oop, clear
 
-    pemain1 = Player(name="Warrior", health=550, mana=90, level=5, list_card=[card1, card2, card4])
-    pemain2 = Player(name="Novice", health=400, mana=80, level=2, list_card=[card2, card3, card1])
-    return pemain1, pemain2
-
-def tampilkan_kartu(pemain):
-    kartu = pemain.list_card
-    if not kartu:
-        print("  (Hand kosong)")
-        return
-
-    for nomor, k in enumerate(kartu, start=1):
-        print(f"  [{nomor}] {k.describe()}")
+def show_main_menu():
+    clear()
+    print("=" * 48)
+    print("CARD GAME SEDERHANA")
+    print("=" * 48)
+    print("[1] Mulai Run")
+    print("[2] Lihat aturan singkat")
+    # print("[3] Demonstrasi OOP")
+    print("[0] Keluar")
+    print("-" * 48)
 
 
-def tampilkan_status(pemain):
-    print(f"\n--- Status {pemain.name} (Level {pemain.level}) ---")
-    print(f"Health : {pemain.health}")
-    print(f"Mana   : {pemain.mana}")
-    print(f"Hand   : {len(pemain.list_card)}/{pemain.checkMaximumHand()} kartu")
-    tampilkan_kartu(pemain)
+def show_rules():
+    clear()
+    print("=" * 90)
+    print("ATURAN SINGKAT")
+    print("=" * 90)
+    print("""- Kalahkan seluruh musuh untuk memperoleh gold dan maju ke ronde berikutnya
+- HP mencapai 0 berarti run berakhir
+- Kartu fisik menggunakan HP, sedangkan kartu elemental/support menggunakan MP
+- Setelah menang, shop menyediakan kartu baru dan upgrade stat karakter""")
+    print("-" * 90)
+    input("Tekan Enter untuk melanjutkan...")
 
 
-def aksi_pakai_kartu(pemain, lawan):
-    if not pemain.list_card:
-        print("Hand kosong, tidak ada kartu yang bisa dipakai!")
-        return False
+def run_game():
+    player = Player()
+    round_number = 1
+    highscore = 0
 
-    tampilkan_kartu(pemain)
-    pilihan = input("Pilih nomor kartu (0 = batal): ").strip()
+    while player.is_alive:
+        enemy_count = random.randint(1, min(3, 1 + round_number // 2))
+        enemies = [create_enemy(round_number, i + 1) for i in range(enemy_count)]
+        battle = Battle(player, enemies, round_number)
+        won = battle.run()
+        if not won:
+            break
 
-    try:
-        nomor = int(pilihan)
-    except ValueError:
-        print("Input harus berupa angka!")
-        return False
+        player.gold += sum(enemy.gold_reward for enemy in enemies)
+        highscore = round_number
+        print(f"\nRonde {round_number} selesai! Gold sekarang: {player.gold}.")
+        Shop(player, round_number).visit()
+        player.restore_hp(10)
+        player.restore_mp(8)
+        round_number += 1
 
-    if nomor == 0:
-        return False
-    if not 1 <= nomor <= len(pemain.list_card):
-        print("Nomor kartu tidak valid!")
-        return False
-
-    kartu = pemain.list_card[nomor - 1]
-    if pemain.mana < kartu.sp_cost:
-        print(f"Mana tidak cukup! {kartu.name} butuh {kartu.sp_cost} SP, mana kamu {pemain.mana}.")
-        return False
-
-    pemain.use_card(nomor, lawan)
-    pemain.reduce_mana = kartu.sp_cost
-    print(f"Sisa mana {pemain.name}: {pemain.mana}")
-    return True
+    print("\n" + "=" * 48)
+    print("                 GAME OVER")
+    print(f"Ronde tertinggi yang dilewati: {highscore}")
+    print(f"Gold tersisa: {player.gold}")
+    print("=" * 48)
+    return highscore
 
 
-def aksi_tarik_kartu(pemain):
-    jumlah_sebelum = len(pemain.list_card)
-    pemain.draw_card()
-    return len(pemain.list_card) > jumlah_sebelum
-
-
-def game_loop():
-    pemain1, pemain2 = buat_pemain()
-    daftar_pemain = [pemain1, pemain2]
-
-    print("=" * 45)
-    print("        CARD GAME SEDERHANA")
-    print("=" * 45)
-    tampilkan_status(pemain1)
-    tampilkan_status(pemain2)
-
-    giliran = 0
-    while pemain1.is_alive and pemain2.is_alive:
-        aktif = daftar_pemain[giliran % 2]
-        lawan = daftar_pemain[(giliran + 1) % 2]
-
-        print("\n" + "=" * 45)
-        print(f"Ronde {giliran // 2 + 1} - Giliran {aktif.name}")
-        print(f"Health {aktif.name}: {aktif.health} | Health {lawan.name}: {lawan.health}")
-
-        if aktif.consume_bind():
-            print(f"{aktif.name} sedang terikat dan melewati giliran!")
-            giliran += 1
-            continue
-
-        giliran_selesai = False
-        while not giliran_selesai:
-            list_menu = ["Pakai Kartu", "Tarik Kartu", "Lihat Status", "Lewati Giliran", "Heal"]
-            
-            for index, menu in enumerate(list_menu):
-                print(f"[{index + 1}] {menu}")
-            print("\n[0] Keluar")
-            
-            pilihan = input("Pilih aksi: ").strip()
-
-            if pilihan == "1":
-                giliran_selesai = aksi_pakai_kartu(aktif, lawan)
-            elif pilihan == "2":
-                giliran_selesai = aksi_tarik_kartu(aktif)
-            elif pilihan == "3":
-                tampilkan_status(aktif)
-            elif pilihan == "4":
-                print(f"{aktif.name} melewati giliran.")
-                giliran_selesai = True
-            elif pilihan == "5": 
-                amount = aktif.mana * 2 / aktif.level
-                aktif.restore_health(amount)
-                print(f"{aktif.name} memulihkan {amount} health!")
-                giliran_selesai = True
-            elif pilihan == "0":
-                print("Permainan dihentikan.")
-                return
-            else:
-                print("Pilihan tidak dikenal, coba lagi.")
-
-        giliran += 1
-
-    pemenang = pemain1 if pemain1.is_alive else pemain2
-    print("\n" + "=" * 45)
-    print(f"{pemenang.name} MENANG!")
-    exp = Player.calculateExpGain(pemenang.level)     # staticmethod
-    print(f"{pemenang.name} mendapatkan {exp:.1f} EXP")
-    print("=" * 45)
+def main():
+    highscore = 0
+    while True:
+        show_main_menu()
+        choice = input("Pilih menu: ").strip()
+        if choice == "1":
+            highscore = max(highscore, run_game())
+        elif choice == "2":
+            show_rules()
+        elif choice == "3":
+            demonstrate_oop()
+        elif choice == "0":
+            print(f"Terima kasih bermain! Highscore sesi ini: {highscore}")
+            break
+        else:
+            print("Pilihan tidak valid.")
 
 
 if __name__ == "__main__":
     try:
-        game_loop()
+        main()
     except (EOFError, KeyboardInterrupt):
         print("\nPermainan dihentikan.")
