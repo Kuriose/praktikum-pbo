@@ -158,19 +158,8 @@ Simpan screenshot asli dari terminal setelah menjalankan program, lalu masukkan 
 
 ### B. Bukti abstract class tidak dapat diinstansiasi
 
-Jalankan menu **3 — Demonstrasi OOP**. Output akan menampilkan pesan bahwa `Combatant` tidak dapat diinstansiasi karena masih mempunyai abstract method. Contoh bentuk output (teks error dapat sedikit berbeda antarversi Python):
-
-```text
-=== DEMONSTRASI OOP ===
-Abstract class tidak dapat diinstansiasi: Can't instantiate abstract class Combatant ...
-```
-
 ![Screenshot bukti abstract class](screenshots/abstract-class.png)
 
 ### C. Bukti validasi dan polimorfisme
 
-Demonstrasi OOP juga menampilkan validasi setter HP, validasi card-score, operator overloading, dan pemanggilan `summary()` melalui duck typing.
-
 ![Screenshot demonstrasi OOP](screenshots/demonstrasi-oop.png)
-
-> **Penting:** gambar di atas adalah lokasi/placeholder untuk screenshot yang perlu kamu ambil dari program yang benar-benar dijalankan. Jangan menganggapnya sebagai bukti screenshot yang sudah dilampirkan. Buat folder `screenshots`, simpan hasil tangkapan layar dengan nama persis seperti di atas, lalu pastikan gambar ikut dikumpulkan.
