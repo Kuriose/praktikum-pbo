@@ -91,8 +91,12 @@ def game_loop():
 
         giliran_selesai = False
         while not giliran_selesai:
-            print("\n[1] Pakai kartu        [2] Tarik kartu   [3] Lihat status")
-            print("[4] Lewati giliran     [5] Heal          [0] Keluar")
+            list_menu = ["Pakai Kartu", "Tarik Kartu", "Lihat Status", "Lewati Giliran", "Heal"]
+            
+            for index, menu in enumerate(list_menu):
+                print(f"[{index + 1}] {menu}")
+            print("\n[0] Keluar")
+            
             pilihan = input("Pilih aksi: ").strip()
 
             if pilihan == "1":
