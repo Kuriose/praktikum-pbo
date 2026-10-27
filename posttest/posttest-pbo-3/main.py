@@ -576,7 +576,9 @@ class Battle:
             print("Semua musuh dikalahkan!")
             print("-" * 90)
         else:
+            print("-" * 90)
             print("Pemain kalah.")
+            input("Tekan Enter untuk melanjutkan...")
             print("-" * 90)
         return self.victory
 
