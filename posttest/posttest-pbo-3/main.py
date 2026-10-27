@@ -742,6 +742,7 @@ def print_summary(item):
 
 
 def demonstrate_oop():
+    clear()
     print("=== DEMONSTRASI OOP ===")
     try:
         Combatant("Abstrak", 10, 10, 1, 1, 1)
@@ -763,6 +764,7 @@ def demonstrate_oop():
     print("Duck typing:")
     print_summary(p1)
     print_summary(Shop(p2, 1))
+    input("Tekan Enter untuk melanjutkan...")
 
 def clear(): 
     os.system('clear')

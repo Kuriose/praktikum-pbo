@@ -9,7 +9,7 @@ def show_main_menu():
     print("=" * 48)
     print("[1] Mulai Run")
     print("[2] Lihat aturan singkat")
-    # print("[3] Demonstrasi OOP")
+    print("[3] Demonstrasi OOP")
     print("[0] Keluar")
     print("-" * 48)
 
@@ -65,6 +65,8 @@ def main():
     while True:
         show_main_menu()
         choice = input("Pilih menu: ").strip()
+        print("-" * 48)
+
         if choice == "1":
             highscore = max(highscore, run_game())
         elif choice == "2":

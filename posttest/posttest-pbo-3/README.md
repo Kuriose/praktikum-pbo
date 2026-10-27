@@ -1,90 +1,176 @@
-# Echoes of the Deck — Posttest 3 PBO
+# Card Game Sederhana — (Posttest 3)
 
-Game deck-building roguelike berbasis CLI yang menerapkan konsep OOP: enkapsulasi, inheritance, abstract base class, polimorfisme, operator overloading, dan relasi UML.
+## 1. Judul dan Deskripsi Program
+Game ini merupakan berbasis Command-Line Interface (CLI) yang dibuat menggunakan Python. Pemain bertarung melawan musuh dalam beberapa ronde dengan menggunakan kartu serangan fisik, kartu elemental, dan kartu support. Pemain memperoleh gold setelah menang, lalu dapat membeli kartu, meningkatkan kemampuan, atau memulihkan HP dan MP di shop.
 
-## Cara menjalankan
+Program ini menerapkan konsep Pemrograman Berorientasi Objek (PBO), antara lain abstraksi, enkapsulasi, inheritance, polimorfisme, serta relasi antarkelas.
 
-Gunakan Python 3.10 atau lebih baru. Tidak ada dependency eksternal.
+### Cara menjalankan
+
+Pastikan Python 3.10 atau versi lebih baru sudah terpasang. Buka terminal di folder proyek, lalu jalankan:
 
 ```bash
 python game.py
 ```
 
-Pilih menu **3 — Demonstrasi OOP** untuk menampilkan bukti abstraksi, validasi setter, class/static method, operator overloading, dan duck typing. Smoke test otomatis dapat dijalankan dengan `python -m unittest test_oop.py`.
+Pilih menu **3 — Demonstrasi OOP** untuk melihat bukti abstract class tidak dapat diinstansiasi dan beberapa demonstrasi konsep OOP.
 
-## GDD yang diterapkan
+## 2. Class Diagram dan Relasi
 
-- Pertarungan turn-based melawan 1–3 musuh yang dipilih acak; statistik dan reward musuh meningkat setiap ronde.
-- Statistik karakter: HP, MP, Strength, Intelligence, dan Speed.
-- Basic Attack, Play Card, Draw Card, Discard Card, Block, Scan Enemy, dan Run.
-- Kartu physical membayar cost menggunakan HP; kartu elemental/support membayar cost menggunakan MP.
-- Affinity `WEAKNESS` menggandakan damage dan memberi Extra Turn; `STRENGTH` meniadakan damage; `NEUTRAL` memberi damage normal.
-- Total card-score deck dibatasi 10 dan hand default maksimal 3 kartu. Next Card Preview menampilkan kartu berikutnya yang akan ditarik.
-- Kartu yang dipakai/dibuang masuk discard pile. Membuang kartu berbiaya MP mengembalikan 15% cost MP (dibulatkan ke bawah).
-- Setelah menang, pemain mendapat gold dan dapat meng-upgrade kartu yang dimiliki, membeli kartu baru, meningkatkan statistik, atau memulihkan HP/MP di shop.
+Diagram berikut merangkum kelas-kelas utama serta relasi yang digunakan dalam program.
 
-## Struktur file
+```mermaid
+classDiagram
+    class Card {
+        <<abstract>>
+        +name
+        +description
+        +card_score
+        +cost
+        +play(user, target)* bool
+        +resource_name()* str
+        +card_type* str
+        +describe() str
+    }
+    class PhysicalCard {
+        +damage
+        +physical_type
+        +play(user, target) bool
+        +resource_name() str
+    }
+    class ElementalCard {
+        +damage
+        +element
+        +play(user, target) bool
+        +resource_name() str
+    }
+    class StrikeCard
+    class SlashCard
+    class PierceCard
+    class FireCard
+    class WindCard
+    class WaterCard
+    class EarthCard
+    class HealCard
+    class ScanCard
+    class Deck {
+        -cards
+        -hand
+        -discard_pile
+        +add_card(card)
+        +draw()
+        +discard(index)
+        +total_score
+    }
+    class Combatant {
+        <<abstract>>
+        +name
+        +hp
+        +mp
+        +choose_action(battle)*
+        +basic_attack_power()*
+        +perform_basic_attack(target)
+    }
+    class Player {
+        +deck
+        +gold
+        +choose_action(battle)
+        +basic_attack_power()
+        +summary()
+    }
+    class Enemy {
+        +gold_reward
+        +choose_action(battle)
+        +basic_attack_power()
+        +summary()
+    }
+    class Battle {
+        +player
+        +enemies
+        +round_number
+        +run()
+        +player_turn(player)
+    }
+    class Shop {
+        +player
+        +round_number
+        +stock
+        +summary()
+        +visit()
+    }
 
-```text
-.
-├── main.py             # Model, kartu, deck, karakter, battle, shop
-├── game.py             # Menu utama dan core game loop
-├── test_oop.py         # Smoke tests untuk ketentuan OOP utama
-├── class_diagram.png   # Diagram kelas untuk laporan
-└── README.md
+    Card <|-- PhysicalCard
+    Card <|-- ElementalCard
+    PhysicalCard <|-- StrikeCard
+    PhysicalCard <|-- SlashCard
+    PhysicalCard <|-- PierceCard
+    ElementalCard <|-- FireCard
+    ElementalCard <|-- WindCard
+    ElementalCard <|-- WaterCard
+    ElementalCard <|-- EarthCard
+    Card <|-- HealCard
+    Card <|-- ScanCard
+    Combatant <|-- Player
+    Combatant <|-- Enemy
+    Player *-- Deck : memiliki deck
+    Deck o-- Card : menyimpan kartu
+    Battle --> Player : menggunakan
+    Battle --> Enemy : melawan
+    Shop --> Player : mengelola pembelian
+    Shop o-- Card : menyediakan stok kartu
 ```
 
-## Class diagram
+### Penjelasan relasi
 
-![Class diagram Echoes of the Deck](class_diagram.png)
+- **Inheritance (pewarisan):** `PhysicalCard` dan `ElementalCard` mewarisi `Card`. Kartu konkret seperti `StrikeCard`, `FireCard`, `HealCard`, dan `ScanCard` mewarisi kelas kartu yang sesuai. `Player` dan `Enemy` mewarisi abstract class `Combatant`.
+- **Asosiasi — `Battle` dengan `Player` dan `Enemy`:** `Battle` menyimpan referensi ke pemain dan daftar musuh yang terlibat dalam pertarungan. Objek pemain dan musuh disiapkan di luar objek `Battle`.
+- **Agregasi — `Deck` dengan `Card`:** `Deck` menyimpan kumpulan objek kartu. Kartu dapat berpindah antara kumpulan kartu, tangan, dan discard pile; keberadaan kartu tidak semata-mata terikat pada satu objek deck.
+- **Komposisi — `Player` dengan `Deck`:** konstruktor `Player.__init__()` membuat deck awal melalui `Deck.starter_deck()` dan menyimpannya sebagai atribut `deck`. Dalam desain program ini, deck merupakan bagian dari state pemain.
+- **Relasi `Shop` dengan `Player` dan `Card`:** `Shop` menyimpan referensi pemain untuk transaksi dan menyediakan objek-objek kartu pada atribut `stock`.
 
-### Relasi UML yang benar-benar digunakan kode
 
-- **Asosiasi — `Battle` dengan `Player` dan `Enemy`:** `Battle` menyimpan referensi ke pemain dan daftar musuh untuk satu encounter. Entitas tersebut dibuat di luar `Battle` dan tidak dibuat/dihancurkan oleh `Battle`.
-- **Agregasi — `Deck` dengan `Card`:** objek kartu dibuat di luar deck (misalnya oleh `Deck.starter_deck()` atau `Shop`) lalu disimpan dalam koleksi deck. Kartu dipindahkan di antara draw pile, hand, dan discard pile; kartu bukan bagian eksklusif dari siklus hidup objek `Deck`.
-- **Komposisi — `Player` dengan `Deck`:** `Player.__init__()` membuat deck miliknya sendiri dan menyimpannya sebagai atribut `deck`. Deck ini menjadi bagian internal dari state pemain.
+## 3. Penerapan Abstraksi dan Polimorfisme
 
-## Abstraksi dan inheritance
+### Abstraksi
 
-- **`Combatant`** adalah abstract base class turunan `ABC`. Abstract method-nya adalah `choose_action(battle)` dan `basic_attack_power()`. Method konkret yang digunakan bersama adalah `perform_basic_attack(target)`, selain method status dan pemulihan.
-- **`Player`** dan **`Enemy`** mewarisi `Combatant`, memanggil `super().__init__(...)`, dan mengimplementasikan kedua abstract method. Implementasi `choose_action()` berbeda: pemain menerima pilihan aksi dari CLI, sedangkan musuh memilih aksi AI.
-- **`Card`** juga merupakan abstract base class. Abstract method `play()`, `resource_name()`, dan property `card_type` diimplementasikan oleh kelas kartu konkret.
-- Kelas kartu menggunakan inheritance bertingkat: `PhysicalCard` diturunkan menjadi `StrikeCard`, `SlashCard`, dan `PierceCard`; `ElementalCard` diturunkan menjadi `FireCard`, `WindCard`, `WaterCard`, dan `EarthCard`.
+Abstraksi digunakan untuk menetapkan antarmuka umum tanpa memaksakan satu implementasi untuk semua turunannya.
 
-## Polimorfisme
+- **`Combatant(ABC)`** merupakan abstract class. Method abstraknya adalah `choose_action(battle)` dan `basic_attack_power()`.
+- **`Player`** mengimplementasikan `choose_action()` untuk meneruskan giliran ke `battle.player_turn(self)`, sedangkan **`Enemy`** mengimplementasikan `choose_action()` dengan logika AI musuh. Keduanya juga memiliki implementasi `basic_attack_power()` masing-masing.
+- **`Card(ABC)`** merupakan abstract class dengan abstract method `play(user, target)`, `resource_name()`, dan abstract property `card_type`. Kelas kartu konkret mengimplementasikan perilaku tersebut sesuai jenis kartunya.
 
-1. **Via inheritance:** `Player.choose_action()` memanggil `Battle.player_turn()`, sedangkan `Enemy.choose_action()` menjalankan logika AI. Keduanya dipanggil melalui antarmuka `Combatant` dalam loop pertarungan.
-2. **Duck typing:** `print_summary(item)` hanya membutuhkan objek yang menyediakan method `summary()`. Fungsi yang sama dipanggil untuk `Player` dan `Shop`, yang tidak berhubungan melalui inheritance.
-3. **Operator overloading:** `Deck.__len__()` memungkinkan `len(deck)`, sementara `Deck.__eq__()` membandingkan total card-score dua deck dengan operator `==`.
+Karena `Combatant` dan `Card` masih memiliki method abstrak, keduanya tidak dapat dibuat menjadi objek secara langsung. Objek harus dibuat dari kelas konkret seperti `Player`, `Enemy`, `StrikeCard`, atau `FireCard`.
 
-## Enkapsulasi dan method
+### Polimorfisme
 
-- `Combatant.hp` dan `Combatant.mp` menggunakan `@property` dan setter yang menolak nilai negatif/non-numerik; HP/MP dibatasi hingga nilai maksimum masing-masing.
-- Data internal seperti `Combatant.__hp`, `Combatant.__mp`, `Combatant.__block`, `Card.__card_id`, dan koleksi internal `Deck` memakai atribut private.
-- Atribut `_strength` dan `_intelligence` merupakan protected agar dapat diakses melalui kelas turunan.
-- `Deck.starter_deck()` adalah `@classmethod`; `Deck.score_is_valid()` dan `Card.valid_cost()` adalah `@staticmethod`.
+- **Polimorfisme melalui inheritance:** `Player.choose_action()` dan `Enemy.choose_action()` memiliki nama method yang sama tetapi perilaku berbeda. Keduanya digunakan sebagai tipe `Combatant` dalam sistem pertarungan.
+- **Polimorfisme pada kartu:** method `play()` memiliki implementasi berbeda. `PhysicalCard.play()` menggunakan HP sebagai biaya, `ElementalCard.play()` menggunakan MP untuk menyerang, sedangkan `HealCard.play()` memulihkan HP dan `ScanCard.play()` menampilkan status target.
+- **Duck typing:** fungsi `print_summary(item)` hanya memerlukan objek yang mempunyai method `summary()`. Fungsi tersebut dapat menerima objek `Player` maupun `Shop`, walaupun keduanya tidak berada dalam hubungan pewarisan yang sama.
+- **Operator overloading:** `Deck.__len__()` memungkinkan pemanggilan `len(deck)`, sedangkan `Deck.__eq__()` memungkinkan perbandingan dua deck dengan operator `==` berdasarkan total card-score.
 
-## Bukti abstraksi dan validasi
+## 4. Screenshot Output Program
 
-Jalankan `python game.py`, lalu pilih menu `3`. Program mencoba membuat objek `Combatant` secara langsung dan menangkap `TypeError`, membuktikan abstract class tidak bisa diinstansiasi. Demonstrasi juga menguji setter HP dengan nilai valid dan negatif, menampilkan hasil validasi card-score, operator overloading, serta duck typing.
+Simpan screenshot asli dari terminal setelah menjalankan program, lalu masukkan gambar ke folder `screenshots/`. Gunakan nama file yang sesuai dengan tautan di bawah ini.
 
-Contoh bagian output:
+### A. Menu program
+
+![Screenshot menu utama](screenshots/menu-utama.png)
+
+### B. Bukti abstract class tidak dapat diinstansiasi
+
+Jalankan menu **3 — Demonstrasi OOP**. Output akan menampilkan pesan bahwa `Combatant` tidak dapat diinstansiasi karena masih mempunyai abstract method. Contoh bentuk output (teks error dapat sedikit berbeda antarversi Python):
 
 ```text
+=== DEMONSTRASI OOP ===
 Abstract class tidak dapat diinstansiasi: Can't instantiate abstract class Combatant ...
-HP valid diterima: 100
-HP tidak valid ditolak: HP harus berupa angka non-negatif.
-Card score valid (6/10): True
-Jumlah kartu di deck Tester A: 5
-Perbandingan deck (score): True
-Player Tester A: HP 100/120, Gold 0
-Shop ronde 1: 4 item tersedia
 ```
 
-Untuk memenuhi bagian screenshot laporan, jalankan demonstrasi di terminal dan ambil screenshot output tersebut, lalu lampirkan pada laporan/posttest sesuai instruksi dosen.
+![Screenshot bukti abstract class](screenshots/abstract-class.png)
 
-## Catatan implementasi
+### C. Bukti validasi dan polimorfisme
 
-- `Deck.total_score` menghitung seluruh kartu di draw pile, hand, dan discard pile agar pemindahan kartu tidak mengakali batas card-score.
-- `Deck.hand` memberikan tuple agar daftar internal hand tidak dapat dimutasi langsung dari luar.
-- Highscore saat ini dihitung selama satu sesi program, bukan disimpan permanen ke file.
+Demonstrasi OOP juga menampilkan validasi setter HP, validasi card-score, operator overloading, dan pemanggilan `summary()` melalui duck typing.
+
+![Screenshot demonstrasi OOP](screenshots/demonstrasi-oop.png)
+
+> **Penting:** gambar di atas adalah lokasi/placeholder untuk screenshot yang perlu kamu ambil dari program yang benar-benar dijalankan. Jangan menganggapnya sebagai bukti screenshot yang sudah dilampirkan. Buat folder `screenshots`, simpan hasil tangkapan layar dengan nama persis seperti di atas, lalu pastikan gambar ikut dikumpulkan.
